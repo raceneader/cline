@@ -94,6 +94,10 @@
 				"command": "cline.openInNewTab",
 				"title": "Open In New Tab",
 				"category": "Cline"
+			},
+			{
+				"command": "cline.openClineSettings",
+				"title": "Open Cline Settings"
 			}
 		],
 		"menus": {
