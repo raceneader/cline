@@ -121,7 +121,11 @@ const SettingsView = ({ onDone }: SettingsViewProps) => {
 						</p>
 					</>
 				)}
-
+				<div style={{ margin: "10px 0 10px 0" }}>
+					<VSCodeLink onClick={() => vscode.postMessage({ type: "openSettings" })}>
+						Additional settings
+					</VSCodeLink>
+				</div>
 				<div
 					style={{
 						textAlign: "center",

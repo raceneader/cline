@@ -26,6 +26,7 @@ export interface WebviewMessage {
 		| "openMcpSettings"
 		| "restartMcpServer"
 		| "autoApprovalSettings"
+		| "openSettings"
 	text?: string
 	askResponse?: ClineAskResponse
 	apiConfiguration?: ApiConfiguration

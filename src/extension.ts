@@ -49,6 +49,12 @@ export function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
+	context.subscriptions.push(
+		vscode.commands.registerCommand("cline.openClineSettings", () => {
+			vscode.commands.executeCommand("workbench.action.openSettings", "@ext:saoudrizwan.claude-dev")
+		}),
+	)
+
 	const openClineInNewTab = async () => {
 		outputChannel.appendLine("Opening Cline in new tab")
 		// (this example uses webviewProvider activation event which is necessary to deserialize cached webview, but since we use retainContextWhenHidden, we don't need to use that event)
