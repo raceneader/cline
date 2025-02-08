@@ -1,5 +1,4 @@
 import ignore from "ignore"
-import micromatch from "micromatch"
 import fs from "fs"
 import path from "path"
 
