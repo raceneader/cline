@@ -120,7 +120,7 @@ class WorkspaceTracker {
 
 	private shouldIgnoreGlob(filePath: string, exclusionGlobs: string[]): boolean {
 		// First check .gitignore rules
-		if (this.gitIgnoreProcessor.shouldIgnoreFile(filePath, [])) {
+		if (this.gitIgnoreProcessor.shouldIgnoreFile(filePath)) {
 			return true // File is ignored by .gitignore
 		}
 

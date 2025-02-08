@@ -17,22 +17,16 @@ export class GitIgnoreProcessor {
 	}
 
 	/**
-	 * Checks if a file should be ignored based on .gitignore rules and additional exclusion globs.
+	 * Checks if a file should be ignored based on .gitignore rules.
 	 * @param filePath Absolute file path to check.
-	 * @param exclusionGlobs Additional glob patterns for exclusion.
 	 * @returns {boolean} Whether the file should be ignored.
 	 */
-	public shouldIgnoreFile(filePath: string, exclusionGlobs: string[]): boolean {
+	public shouldIgnoreFile(filePath: string): boolean {
 		const fileDir = path.dirname(filePath)
 		const gitignoreRules = this.getGitignoreRulesForPath(fileDir)
 
 		// Apply .gitignore rules if found
-		if (gitignoreRules.ignores(path.relative(fileDir, filePath))) {
-			return true // File is ignored by a .gitignore rule
-		}
-
-		// Use micromatch for additional exclusion globs
-		return micromatch.isMatch(filePath, exclusionGlobs, { dot: true })
+		return gitignoreRules.ignores(path.relative(fileDir, filePath))
 	}
 
 	/**
