@@ -2,9 +2,8 @@ import * as vscode from "vscode"
 import * as path from "path"
 import { listFiles, getDirsToIgnore } from "../../services/glob/list-files"
 import { ClineProvider } from "../../core/webview/ClineProvider"
-import ignore from "ignore"
-import { readFileSync } from "fs"
 import micromatch from "micromatch"
+import { GitIgnoreProcessor } from "../../services/glob/git-ignore"
 
 const cwd = vscode.workspace.workspaceFolders?.map((folder) => folder.uri.fsPath).at(0)
 
@@ -25,7 +24,7 @@ class WorkspaceTracker {
 	private notifyQueue: Promise<void> = Promise.resolve()
 
 	private workspaceDidUpdateTimeout: NodeJS.Timeout | null = null // event debounce timer
-	private gitignoreContentCache: string | null = null
+	private gitIgnoreProcessor: GitIgnoreProcessor
 	private eventCount: number = 0
 
 	// needReInit triggers a call to initializeFilePaths to reanalyze the workspace
@@ -38,6 +37,7 @@ class WorkspaceTracker {
 
 	constructor(provider: ClineProvider) {
 		this.providerRef = new WeakRef(provider)
+		this.gitIgnoreProcessor = new GitIgnoreProcessor(cwd || process.cwd())
 		this.registerFileSystemWatcher()
 	}
 
@@ -119,30 +119,13 @@ class WorkspaceTracker {
 	}
 
 	private shouldIgnoreGlob(filePath: string, exclusionGlobs: string[]): boolean {
-		// Initialize .gitignore processing
-		const gitignore = ignore()
-		const gitignorePath = `${process.cwd()}/.gitignore`
-
-		try {
-			// Load .gitignore content
-			if (!this.gitignoreContentCache) {
-				this.gitignoreContentCache = readFileSync(gitignorePath, "utf8")
-			}
-			gitignore.add(this.gitignoreContentCache)
-
-			// Check against .gitignore rules
-			if (gitignore.ignores(filePath)) {
-				return true // File is ignored by .gitignore
-			}
-		} catch (err) {
-			// no.gitignore is different than a falsy set by cache expiration
-			this.gitignoreContentCache = ""
-			// If .gitignore is not found or there's an error, proceed with exclusionGlobs
+		// First check .gitignore rules
+		if (this.gitIgnoreProcessor.shouldIgnoreFile(filePath, [])) {
+			return true // File is ignored by .gitignore
 		}
 
 		// Use micromatch to check against exclusion globs
 		const isMatch = micromatch.isMatch(filePath, exclusionGlobs, { dot: true })
-
 		return isMatch // Return true if filePath matches exclusion globs
 	}
 
@@ -202,7 +185,11 @@ class WorkspaceTracker {
 				this.needReInit = true
 			}
 
-			// TODO: detect .gitignore changes???
+			// Check if any .gitignore file in the workspace was modified
+			if (path.basename(normalizedPath) === ".gitignore") {
+				this.gitIgnoreProcessor.clearCache()
+				this.needReInit = true
+			}
 
 			this.filePaths.add(pathWithSlash)
 			return pathWithSlash
@@ -221,7 +208,11 @@ class WorkspaceTracker {
 			this.needReInit = true
 		}
 
-		// TODO: detect .gitignore changes???
+		// Check if any .gitignore file in the workspace was deleted
+		if (path.basename(normalizedPath) === ".gitignore") {
+			this.gitIgnoreProcessor.clearCache()
+			this.needReInit = true
+		}
 
 		// if the file delete did not succeed, try the dir delete
 		return isFile || this.filePaths.delete(normalizedPath + "/")
